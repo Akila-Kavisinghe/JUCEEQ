@@ -2,14 +2,17 @@
 
 #include "PluginProcessor.h"
 
-class NewPluginTemplateAudioProcessorEditor : public juce::AudioProcessorEditor
+class SimpleEQAudioProcessorEditor : public juce::AudioProcessorEditor
 {
 public:
-    explicit NewPluginTemplateAudioProcessorEditor(NewPluginTemplateAudioProcessor&);
+    explicit SimpleEQAudioProcessorEditor(SimpleEQAudioProcessor&);
 
 private:
     void paint(juce::Graphics&) override;
     void resized() override;
 
-    juce::GenericAudioProcessorEditor editor {processor};
+    juce::Slider cutOff;
+
+    juce::SliderParameterAttachment cutOffAttachment;
+
 };

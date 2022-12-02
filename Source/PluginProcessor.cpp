@@ -2,16 +2,19 @@
 #include "PluginEditor.h"
 #include <juce_dsp/juce_dsp.h>
 
-NewPluginTemplateAudioProcessor::NewPluginTemplateAudioProcessor()
+SimpleEQAudioProcessor::SimpleEQAudioProcessor()
 {
     parameters.add(*this);
 }
 
-void NewPluginTemplateAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
+void SimpleEQAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
                                                    juce::MidiBuffer& midiMessages)
 
 {
     juce::ignoreUnused(midiMessages);
+
+    auto lowCut = parameters.LowCutFreq->get();
+    auto lowCutQ = parameters.LowCutQ->get();
 
     auto block = juce::dsp::AudioBlock<float>(buffer);
 
@@ -21,46 +24,38 @@ void NewPluginTemplateAudioProcessor::processBlock(juce::AudioBuffer<float>& buf
         
         auto ctx = juce::dsp::ProcessContextReplacing(singleChannel);
 
-        if(c == 0){
-            lowCutR.process(ctx);
-        }
+        filters[c].parameters->setCutOffFrequency(spec.sampleRate, lowCut, lowCutQ);
 
-        else{
-            lowCutL.process(ctx);
-        }
+        filters[c].process(ctx);
+
     }
 
 }
 
-juce::AudioProcessorEditor* NewPluginTemplateAudioProcessor::createEditor()
+juce::AudioProcessorEditor* SimpleEQAudioProcessor::createEditor()
 {
-    return new NewPluginTemplateAudioProcessorEditor(*this);
+    return new SimpleEQAudioProcessorEditor(*this);
 }
 
 // Will do before playback
-void NewPluginTemplateAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
+void SimpleEQAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
-    juce::dsp::ProcessSpec spec;
-
+    
     spec.sampleRate = sampleRate;
     spec.maximumBlockSize = samplesPerBlock;
     spec.numChannels = 2;
 
-    lowCutR.prepare(spec);
+    for (int c = 0; c < spec.numChannels; c++){
 
-    lowCutR.reset();
+        filters[c].prepare(spec);
+        filters[c].reset();
+        filters[c].parameters->setCutOffFrequency(sampleRate, 500.f);
 
-    lowCutR.parameters->setCutOffFrequency(sampleRate, 500.f);
-
-    lowCutL.prepare(spec);
-
-    lowCutL.reset();
-
-    lowCutL.parameters->setCutOffFrequency(sampleRate, 500.f);
-
+    }
+ 
 }
 
-void NewPluginTemplateAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
+void SimpleEQAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
 {
     //Serializes your parameters, and any other potential data into an XML:
 
@@ -80,7 +75,7 @@ void NewPluginTemplateAudioProcessor::getStateInformation(juce::MemoryBlock& des
     copyXmlToBinary(*pluginPreset.createXml(), destData);
 }
 
-void NewPluginTemplateAudioProcessor::setStateInformation(const void* data,
+void SimpleEQAudioProcessor::setStateInformation(const void* data,
                                                           int sizeInBytes)
 {
     //Loads your parameters, and any other potential data from an XML:
@@ -106,5 +101,13 @@ void NewPluginTemplateAudioProcessor::setStateInformation(const void* data,
 
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
-    return new NewPluginTemplateAudioProcessor();
+    return new SimpleEQAudioProcessor();
+}
+
+juce::RangedAudioParameter& SimpleEQAudioProcessor::getParameterById(const juce::String& id) const
+{
+    auto result = parameters.parametersByName.at(id);
+
+    return *result;
+
 }

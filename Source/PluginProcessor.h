@@ -4,10 +4,12 @@
 
 #include <juce_dsp/juce_dsp.h>
 
-class NewPluginTemplateAudioProcessor : public PluginHelpers::ProcessorBase
+class SimpleEQAudioProcessor : public PluginHelpers::ProcessorBase
 {
+    using Filter = juce::dsp::StateVariableFilter::Filter<float>;
+
 public:
-    NewPluginTemplateAudioProcessor();
+    SimpleEQAudioProcessor();
 
     void processBlock(juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
 
@@ -18,12 +20,16 @@ public:
 
     void prepareToPlay(double sampleRate, int samplesPerBlock) override;
 
+    juce::RangedAudioParameter& getParameterById(const juce::String& id) const;
+
 private:
 
     Parameters parameters;
 
-    juce::dsp::StateVariableFilter::Filter<float> lowCutR;
+    std::array<Filter, 2> filters;
 
-    juce::dsp::StateVariableFilter::Filter<float> lowCutL;
+    juce::dsp::ProcessSpec spec;
+
+    
 
 };

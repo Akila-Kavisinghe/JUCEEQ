@@ -1,20 +1,23 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
+#include "Parameters.h"
 
-NewPluginTemplateAudioProcessorEditor::NewPluginTemplateAudioProcessorEditor(
-    NewPluginTemplateAudioProcessor& p)
-    : AudioProcessorEditor(&p)
+SimpleEQAudioProcessorEditor::SimpleEQAudioProcessorEditor(
+    SimpleEQAudioProcessor& p)
+    : AudioProcessorEditor(&p),
+    cutOff(),
+    cutOffAttachment(p.getParameterById(params::LOWCUTFREQ), cutOff)
 {
-    addAndMakeVisible(editor);
     setSize(400, 300);
+    addAndMakeVisible(cutOff);
 }
 
-void NewPluginTemplateAudioProcessorEditor::paint(juce::Graphics& g)
+void SimpleEQAudioProcessorEditor::paint(juce::Graphics& g)
 {
     g.fillAll(getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId));
 }
 
-void NewPluginTemplateAudioProcessorEditor::resized()
+void SimpleEQAudioProcessorEditor::resized()
 {
-    editor.setBounds(getLocalBounds());
+    cutOff.setBounds(10,10, getWidth()*0.9, 20);
 }
